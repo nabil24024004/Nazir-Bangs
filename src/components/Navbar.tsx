@@ -86,9 +86,30 @@ export const Navbar = ({
                 </SheetHeader>
                 <nav className="flex flex-col gap-6 text-lg text-muted-foreground">
                   <NavItems className="py-2 border-b border-border/50" />
+                  
+                  {user && (
+                    <div className="flex flex-col gap-4 pt-4">
+                      <p className="text-sm font-medium text-foreground px-2">Account Management</p>
+                      <div className="flex items-center gap-3 px-2">
+                        <UserButton 
+                          afterSignOutUrl="/" 
+                          appearance={{
+                            elements: {
+                              userButtonAvatarBox: "w-10 h-10 rounded-full border border-border"
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground">{user.user_metadata.full_name}</span>
+                          <span className="text-xs text-muted-foreground">Manage your settings</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {showWriteButton && user && (
-                    <Button onClick={handleWriteClick} className="w-full gap-2 mt-4">
-                      <PenLine className="w-4 h-4" />
+                    <Button onClick={handleWriteClick} className="w-full gap-2 mt-4 py-6 text-lg">
+                      <PenLine className="w-5 h-5" />
                       Write a Story
                     </Button>
                   )}
@@ -116,29 +137,31 @@ export const Navbar = ({
           <NavItems />
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-4 sm:gap-6">
           <ThemeToggle />
           {user ? (
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
               {showWriteButton && (
                 <Button onClick={handleWriteClick} size="sm" className="hidden sm:flex gap-2">
                   <PenLine className="w-4 h-4" />
                   Write
                 </Button>
               )}
-              <UserButton 
-                afterSignOutUrl="/" 
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: "w-8 h-8 rounded-full border border-border"
-                  }
-                }}
-              />
+              <div className="flex items-center justify-center p-1">
+                <UserButton 
+                  afterSignOutUrl="/" 
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "w-10 h-10 sm:w-8 sm:h-8 rounded-full border border-border transition-transform active:scale-95 touch-manipulation"
+                    }
+                  }}
+                />
+              </div>
             </div>
           ) : (
             <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
               <LogIn className="w-4 h-4" />
-              <span className="hidden xmb:inline">Sign In</span>
+              <span className="hidden sm:inline">Sign In</span>
             </Button>
           )}
         </div>
