@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -92,16 +93,7 @@ const PostView = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <ThemeToggle />
-        </div>
-      </header>
+      <Navbar showBackButton />
 
       {/* Article */}
       <article className="container mx-auto px-4 py-12 max-w-3xl">

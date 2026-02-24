@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, LogIn, LogOut, Search, PenLine } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { BlogPostCard } from "@/components/BlogPostCard";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { Footer } from "@/components/Footer";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
 
 interface Post {
   id: string;
@@ -33,6 +34,18 @@ const Index = () => {
   const { toast } = useToast();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleNewPost = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to create a post."
+      });
+      navigate("/auth");
+      return;
+    }
+    setIsCreateOpen(true);
+  };
 
   const filteredPosts = useMemo(() => {
     if (!searchQuery.trim()) return posts;
@@ -70,50 +83,9 @@ const Index = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleNewPost = () => {
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to create a post."
-      });
-      navigate("/auth");
-      return;
-    }
-    setIsCreateOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-heading font-bold text-foreground tracking-tight">NazirBangs</h1>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="/" className="hover:text-foreground transition-colors">Home</a>
-            <a href="/archive" className="hover:text-foreground transition-colors">Archive</a>
-            <a href="/authors" className="hover:text-foreground transition-colors">Authors</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {user ?
-            <>
-                <Button onClick={handleNewPost} size="sm" className="gap-2">
-                  <PenLine className="w-4 h-4" />
-                  Write
-                </Button>
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </> :
-
-            <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </Button>
-            }
-          </div>
-        </div>
-      </header>
+      <Navbar showWriteButton onWriteClick={() => setIsCreateOpen(true)} />
 
       {/* Hero Section */}
       <section className="py-20 md:py-32 border-b border-border">
@@ -153,18 +125,17 @@ const Index = () => {
             <p className="text-muted-foreground mb-6 text-lg">
               {searchQuery ? "No posts match your search." : "No stories yet. Be the first to share!"}
             </p>
-            {!searchQuery && user &&
-          <Button onClick={handleNewPost} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Write First Story
-              </Button>
-          }
-            {!searchQuery && !user &&
-          <Button onClick={() => navigate("/auth")} variant="outline" className="gap-2">
-                <LogIn className="w-4 h-4" />
-                Sign in to write
-              </Button>
-          }
+          {!searchQuery && user && (
+            <Button onClick={handleNewPost} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Write First Story
+            </Button>
+          )}
+          {!searchQuery && !user && (
+            <Button onClick={() => navigate("/auth")} variant="outline" className="gap-2">
+              Sign in to write
+            </Button>
+          )}
           </div> :
 
         <div className="space-y-0">

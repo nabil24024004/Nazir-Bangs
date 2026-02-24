@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -76,35 +77,7 @@ const Authors = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 
-            className="text-2xl font-heading font-bold text-foreground tracking-tight cursor-pointer"
-            onClick={() => navigate("/")}
-          >
-            GangBang
-          </h1>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="/" className="hover:text-foreground transition-colors">Home</a>
-            <a href="/archive" className="hover:text-foreground transition-colors">Archive</a>
-            <a href="/authors" className="text-foreground transition-colors">Authors</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {user ? (
-              <Button variant="ghost" size="sm" onClick={signOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar logoText="GangBang" />
 
       {/* Content */}
       <main className="container mx-auto px-4 py-16">
