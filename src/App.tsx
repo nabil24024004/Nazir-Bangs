@@ -54,8 +54,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/post/:id" element={<PostView />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/sign-up" element={<Auth />} />
+                <Route path="/auth/*" element={<Auth />} />
                 <Route path="/archive" element={<Archive />} />
                 <Route path="/authors" element={<Authors />} />
                 <Route path="/author/:authorId" element={<AuthorProfile />} />
