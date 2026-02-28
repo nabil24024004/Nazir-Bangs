@@ -47,7 +47,7 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         variant: "destructive",
@@ -56,7 +56,7 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
       });
       return;
     }
-    
+
     if (!title.trim() || !content.trim()) {
       toast({
         variant: "destructive",
@@ -72,20 +72,39 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
       let imageUrl = null;
 
       if (image) {
-        const fileExt = image.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("blog-images")
-          .upload(fileName, image);
+        // 1. Get presigned URL from Edge Function
+        const { data, error: functionError } = await supabase.functions.invoke('r2-upload', {
+          body: {
+            fileName: image.name,
+            fileType: image.type,
+          }
+        });
 
-        if (uploadError) throw uploadError;
+        if (functionError) throw functionError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("blog-images")
-          .getPublicUrl(fileName);
+        const { signedUrl, fileName } = data;
 
-        imageUrl = publicUrl;
+        // 2. Upload directly to Cloudflare R2 using the presigned URL
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          body: image,
+          headers: {
+            'Content-Type': image.type,
+          }
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image to Cloudflare R2');
+        }
+
+        // 3. Construct public URL using the environment variable
+        const publicDomain = import.meta.env.VITE_CLOUDFLARE_R2_PUBLIC_URL;
+        if (!publicDomain) {
+          throw new Error("Missing VITE_CLOUDFLARE_R2_PUBLIC_URL in .env");
+        }
+
+        const baseUrl = publicDomain.endsWith('/') ? publicDomain.slice(0, -1) : publicDomain;
+        imageUrl = `${baseUrl}/${fileName}`;
       }
 
       const { error: insertError } = await supabase
@@ -130,7 +149,7 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
         <DialogHeader>
           <DialogTitle className="text-2xl font-heading">Write a Story</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
@@ -181,10 +200,10 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
               </div>
               <div className="text-sm space-y-2">
                 <p className="text-muted-foreground flex flex-wrap gap-1">
-                  Limit the image size to around 400 kb. 
-                  <a 
-                    href="https://imagecompressor.11zon.com/en/image-compressor/compress-image-without-losing-quality" 
-                    target="_blank" 
+                  Limit the image size to around 400 kb.
+                  <a
+                    href="https://imagecompressor.11zon.com/en/image-compressor/compress-image-without-losing-quality"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline font-medium"
                   >
@@ -202,9 +221,9 @@ export const CreatePostDialog = ({ open, onOpenChange, onSuccess }: CreatePostDi
               </div>
               {imagePreview && (
                 <div className="mt-4">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
                     className="w-full h-48 object-cover rounded-lg border border-border"
                   />
                 </div>

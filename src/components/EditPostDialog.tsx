@@ -47,7 +47,7 @@ export const EditPostDialog = ({ post, open, onOpenChange, onSuccess }: EditPost
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim() || !content.trim()) {
       toast.error("Please fill in all required fields");
       return;
@@ -59,20 +59,39 @@ export const EditPostDialog = ({ post, open, onOpenChange, onSuccess }: EditPost
       let imageUrl = post.image_url;
 
       if (image) {
-        const fileExt = image.name.split(".").pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        // 1. Get presigned URL from Edge Function
+        const { data, error: functionError } = await supabase.functions.invoke('r2-upload', {
+          body: {
+            fileName: image.name,
+            fileType: image.type,
+          }
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from("blog-images")
-          .upload(filePath, image);
+        if (functionError) throw functionError;
 
-        if (uploadError) throw uploadError;
+        const { signedUrl, fileName } = data;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("blog-images")
-          .getPublicUrl(filePath);
+        // 2. Upload directly to Cloudflare R2
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          body: image,
+          headers: {
+            'Content-Type': image.type,
+          }
+        });
 
-        imageUrl = publicUrl;
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image to Cloudflare R2');
+        }
+
+        // 3. Construct public URL using the environment variable
+        const publicDomain = import.meta.env.VITE_CLOUDFLARE_R2_PUBLIC_URL;
+        if (!publicDomain) {
+          throw new Error("Missing VITE_CLOUDFLARE_R2_PUBLIC_URL in .env");
+        }
+
+        const baseUrl = publicDomain.endsWith('/') ? publicDomain.slice(0, -1) : publicDomain;
+        imageUrl = `${baseUrl}/${fileName}`;
       }
 
       const { error } = await supabase
@@ -137,9 +156,9 @@ export const EditPostDialog = ({ post, open, onOpenChange, onSuccess }: EditPost
             />
             {imagePreview && (
               <div className="mt-2">
-                <img 
-                  src={imagePreview} 
-                  alt="Preview" 
+                <img
+                  src={imagePreview}
+                  alt="Preview"
                   className="max-h-48 rounded-md object-cover"
                 />
               </div>
